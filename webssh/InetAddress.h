@@ -1,12 +1,16 @@
 #pragma once
+#include <cstdint>
 #include <iostream>
 #include <arpa/inet.h>
 
 class InetAddress {
 public:
-  InetAddress();
   InetAddress(std::string ip, uint16_t port);
-  sockaddr_in getAddr();
+  InetAddress(uint16_t port = 0, bool loopbackOnly=false);
+  sockaddr_in getAddr() const;
+  std::string toIp() const;
+  std::string toPort() const;
+  std::string toIpPort() const;
 
 public:
   struct sockaddr_in addr_;

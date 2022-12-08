@@ -1,37 +1,72 @@
 #include "Socket.h"
 #include "InetAddress.h"
-#include <sys/socket.h>
 #include "util.h"
+#include <cstddef>
 #include <cstring>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/uio.h> // readv
+#include <unistd.h>  //read
 
-Socket::Socket(){
-    sockfd_ = socket(AF_INET, SOCK_STREAM, 0);
+Socket::Socket() { sockfd_ = socket(AF_INET, SOCK_STREAM, 0); }
+
+void Socket::listen() {
+  int ret = ::listen(sockfd_, SOMAXCONN);
+  if (ret < 0) {
+    LOG << "listen error...";
+  }
 }
 
-void Socket::listen(){
-    int ret = ::listen(sockfd_, SOMAXCONN) ;
-    if(ret<0){
-        LOG << "listen error...";
-    }
-}
-
-void Socket::bind(InetAddress* addr){
-    struct sockaddr_in tmpaddr = addr->getAddr();
-    int ret = ::bind(sockfd_, (sockaddr*)&tmpaddr, sizeof(tmpaddr));
-    if(ret<0){
-        LOG << "bind error...";
-    }
+void Socket::bind(const InetAddress &addr) {
+  struct sockaddr_in tmpaddr = addr.getAddr();
+  int ret = ::bind(sockfd_, (sockaddr *)&tmpaddr, sizeof(tmpaddr));
+  if (ret < 0) {
+    LOG << "bind error...";
+  }
 }
 
 // 接受链接，把对端地址写入到 peeraddr
-int Socket::accept(InetAddress* peeraddr){
-    int connfd = ::accept(sockfd_, (sockaddr*)&peeraddr->addr_, &peeraddr->addrlen_);
-    if(connfd<0){
-        LOG << "accept error...";
-    }
-    return connfd;
+int Socket::accept(InetAddress *peeraddr) {
+  int connfd =
+      ::accept(sockfd_, (sockaddr *)&peeraddr->addr_, &peeraddr->addrlen_);
+  if (connfd < 0) {
+    LOG << "accept error...";
+  }
+  return connfd;
 }
 
-int Socket::getFd(){
-    return sockfd_;
+int Socket::getFd() { return sockfd_; }
+
+int Socket::connect(int sockfd, const struct sockaddr *addr) {
+  return ::connect(sockfd, addr,
+                   static_cast<socklen_t>(sizeof(struct sockaddr)));
+}
+
+ssize_t Socket::read(int sockfd, void *buf, size_t count) {
+  return ::read(sockfd, buf, count);
+}
+
+ssize_t Socket::readv(int sockfd, const struct iovec *iov, int iovcnt) {
+  return ::readv(sockfd, iov, iovcnt);
+}
+
+ssize_t Socket::write(int sockfd, void *buf, size_t count) {
+  return ::write(sockfd, buf, count);
+}
+
+ssize_t Socket::writev(int sockfd, const struct iovec *iov, int iovcnt) {
+  return ::writev(sockfd, iov, iovcnt);
+}
+
+void Socket::close(int sockfd) {
+  if (::close(sockfd) < 0) {
+    LOG << "close error...";
+  }
+}
+
+void Socket::shutdownWrite(int sockfd) {
+  if (::shutdown(sockfd, SHUT_WR) < 0) {
+    LOG << "shutdown error...";
+  }
+  
 }

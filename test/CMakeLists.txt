@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 17)
-project(webssh)
-file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/webssh/*.cpp)
-add_subdirectory(test)
-add_executable(main main.cpp ${SRC})
+file(GLOB_RECURSE TEST ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+foreach(file ${TEST})
+    get_filename_component(file_name ${file} NAME_WE)
+    message(STATUS ${file_name})
+    add_executable(${file_name} ${file} ${SRC})
+endforeach(file ${TEST})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -Wextra -std=c++17 -pthread")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-piarameter -Wno-attributes") #TODO: remove

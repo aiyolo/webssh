@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 17)
 file(GLOB_RECURSE TEST ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+
+find_package(GTest REQUIRED)
 foreach(file ${TEST})
     get_filename_component(file_name ${file} NAME_WE)
     message(STATUS ${file_name})
     add_executable(${file_name} ${file} ${SRC})
+    target_link_libraries(${file_name} PRIVATE GTest::GTest)
+    add_test(NAME ${file_name} COMMAND ${file_name})
 endforeach(file ${TEST})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -Wall -Wextra -std=c++17 -pthread")

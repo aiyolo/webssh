@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 17)
 project(webssh)
+enable_testing()
 file(GLOB_RECURSE SRC ${PROJECT_SOURCE_DIR}/webssh/*.cpp)
 add_subdirectory(test)
 add_executable(main main.cpp ${SRC})

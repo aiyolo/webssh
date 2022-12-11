@@ -1,9 +1,9 @@
 #pragma once
-#include "Epoll.h"
+#include "Epoller.h"
 #include <vector>
 #include <memory> // unique_ptr
 
-#define PollTimeMs 10000
+#define kPollTimeMs 10000
 
 class EventLoop {
 public:
@@ -11,8 +11,9 @@ public:
     ~EventLoop();
     void loop();
     void doPendingFunctors(); // 处理其他事件
+    void updateChannel(Channel *channel);
 
     bool quit_;
     std::vector<Channel*> activeChannels_;
-    std::unique_ptr<Epoll> poller_;
+    std::unique_ptr<Epoller> poller_;
 };

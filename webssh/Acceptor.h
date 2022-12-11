@@ -15,10 +15,17 @@ public:
     void setNewConnectionCallback(const NewConnectionCallback& cb);
     void accept();
     void listen();
+    void defaultNewConnnectionCallabck(int sockfd, const InetAddress& peerAddr);
 
     EventLoop* loop_;
+    InetAddress localAddr_;
     NewConnectionCallback newConnectionCallback_;
     Socket acceptSocket_;
     Channel acceptChannel;
-
+    // Acceptor在单线程里，不用使用互斥量
+    int connId_; 
+    // Acceptor 要管理连接，需要保存connection实例，使用map保存connName->connection实例的映射
+    // 这就要求在newConnectionCallback_创建的实例conn，在离开函数时也存在，所以需要动态内存管理；
+    
 };
+

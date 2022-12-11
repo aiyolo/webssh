@@ -1,12 +1,14 @@
 #include "Socket.h"
 #include "InetAddress.h"
 #include "util.h"
+#include <asm-generic/socket.h>
 #include <cstddef>
 #include <cstring>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h> // readv
 #include <unistd.h>  //read
+#include <netinet/tcp.h> // IPPROTO_TCP 
 
 Socket::Socket() { sockfd_ = socket(AF_INET, SOCK_STREAM, 0); }
 
@@ -30,7 +32,7 @@ int Socket::accept(InetAddress *peeraddr) {
   int connfd =
       ::accept(sockfd_, (sockaddr *)&peeraddr->addr_, &peeraddr->addrlen_);
   if (connfd < 0) {
-    LOG << "accept error...";
+    LOG << "accept error...\n";
   }
   return connfd;
 }
@@ -66,7 +68,45 @@ void Socket::close(int sockfd) {
 
 void Socket::shutdownWrite(int sockfd) {
   if (::shutdown(sockfd, SHUT_WR) < 0) {
-    LOG << "shutdown error...";
-  }
-  
+    LOG << "shutdownWrite error..." << std::endl;
+  } 
 }
+
+void Socket::setTcpNoDelay()
+{
+  int optval = 1;
+  int ret = ::setsockopt(sockfd_, IPPROTO_TCP, TCP_NODELAY, &optval, static_cast<socklen_t>(sizeof optval));
+  if(ret<0){
+    LOG << "setTcpNoDelay error..." << std::endl;
+  }
+}
+
+void Socket::setReuseAddr()
+{
+  int optval = 1;
+  int ret = ::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEADDR, &optval, static_cast<socklen_t>(sizeof optval));
+  if(ret<0)
+  {
+    LOG << "serReuseAddr error...\n" ; 
+  }
+}
+
+void Socket::setReusePort()
+{
+  int optval = 1;
+  int ret = ::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEPORT, &optval, static_cast<socklen_t>(sizeof optval));
+  if(ret<0)
+  {
+    LOG << "setReusePort error...\n";
+  }
+}
+
+void Socket::setKeepAlive()
+{
+  int optval = 1;
+  int ret = ::setsockopt(sockfd_, SOL_SOCKET,  SO_KEEPALIVE, &optval, static_cast<socklen_t>(sizeof optval));
+  if(ret<0)
+  {
+    LOG << "setKeepAlive error...\n";
+  }
+} 

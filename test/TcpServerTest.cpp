@@ -10,7 +10,7 @@ int main()
 {
     EventLoop loop;
     InetAddress listenAddr(8888, true);
-    TcpServer server(&loop, listenAddr);
+    TcpServer server(&loop,"echo", listenAddr);
     server.start();
     loop.loop();
 }

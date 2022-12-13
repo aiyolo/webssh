@@ -18,14 +18,14 @@ public:
     counter++;
     std::string nPlus = std::string(counter.load(), '+');
     std::string nMinus = std::string(level - counter.load(), '-');
-    std::cout << nPlus << nMinus << "Entering【" << m_name << " " << counter << "】" << std::endl;
+    std::cout << nPlus << nMinus << "Entering【" << m_name <<"】" << std::endl;
   }
 
   ~PrintFuncName() {
     // 析构函数中打印函数名
     std::string nPlus = std::string(counter.load(), '+');
     std::string nMinus = std::string(level - counter.load(), '-');
-    std::cout << nPlus << nMinus<< "Leaving【" << m_name << " " << counter << "】" << std::endl << std::endl;
+    std::cout << nPlus << nMinus<< "Leaving【" << m_name << "】" << std::endl << std::endl;
     counter--;
   }
 

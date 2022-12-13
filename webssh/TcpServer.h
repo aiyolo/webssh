@@ -5,30 +5,30 @@
 #include "Acceptor.h"
 #include "InetAddress.h"
 #include <functional>
+#include "Callbacks.h"
 
 class TcpConnection;
 class Buffer;
 
 class TcpServer {
 public:
-    using OnConnectionCallback = std::function<void(const TcpConnection*)>;
-    using OnMessageCallback = std::function<void(const TcpConnection*, Buffer*)>;
-    using OnCloseCallback = std::function<void(const TcpConnection*)>;
-    using OnWriteCompleCallback = std::function<void(const TcpConnection*)>;
-
-    TcpServer(EventLoop* loop, const InetAddress & listenAddr);
+    TcpServer(EventLoop* loop, const std::string &name, const InetAddress & listenAddr);
     ~TcpServer();
     void start();
     void newConnection(int sockfd, const InetAddress& peerAddr);
     
-    static void defaultOnConnectionCallback(const TcpConnection* conn);
-    static void defaultOnMessageCallback(const TcpConnection* conn, Buffer* buffer);
-
     
     EventLoop* loop_;
+    std::string name_;
+    int connId_;
     std::unique_ptr<Acceptor> acceptor_;
-    OnCloseCallback onConnectionCallback_;
+
+    OnConnectionCallback onConnectionCallback_;
+    OnCloseCallback onCloseCallback_;
     OnMessageCallback onMessageCallback_;
     OnWriteCompleCallback onWriteCompleteCallback_;
 
+    NewConnectionCallback newConnectionCallback_;
+
+    ConnectionMap connectionMap_;
 };

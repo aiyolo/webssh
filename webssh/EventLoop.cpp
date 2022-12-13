@@ -26,6 +26,7 @@ void EventLoop::loop(){
 
 void EventLoop::updateChannel(Channel *channel)
 {
+    PrintFuncName pf("EventLoop::updateChannel\n");
     poller_->updateChannel(channel);
 }
 void EventLoop::doPendingFunctors(){

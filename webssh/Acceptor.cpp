@@ -6,10 +6,13 @@
 
 // 配置阶段，不要执行启动的操作
 Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddr)
-    : loop_(loop), localAddr_(listenAddr), acceptSocket_(),
+    : loop_(loop), localAddr_(listenAddr),
+      newConnectionCallback_(defaultNewConnnectionCallback), acceptSocket_(),
       acceptChannel(loop, acceptSocket_.getFd()), connId_(0) {
   LOG << "server addr:" << listenAddr.toIpPort() << std::endl;
   acceptSocket_.bind(listenAddr);
+  acceptSocket_.setReuseAddr();
+  acceptSocket_.setNonBlocking();
   // acceptsocket上有连接时，触发读事件，使用accept方法处理
   acceptChannel.setOnReadEventCallback(std::bind(&Acceptor::accept, this));
 }
@@ -32,14 +35,21 @@ void Acceptor::accept() {
   if (connfd < 0) {
     LOG << "acceptSocket_.accept error...";
   }
+  LOG << "accept client:" << peerAddr.toIpPort() << std::endl;
   if (newConnectionCallback_) {
     newConnectionCallback_(connfd, peerAddr);
   }
-  LOG << "new client:" << peerAddr.toIpPort() << std::endl;
 }
 
-void Acceptor::defaultNewConnnectionCallabck(int sockfd,
+InetAddress Acceptor::getLocalAddr()
+{
+  return localAddr_;
+}
+
+void Acceptor::defaultNewConnnectionCallback(int sockfd,
                                              const InetAddress &peerAddr) {
-  std::string connName = std::to_string(connId_);
-  TcpConnection conn(loop_, connName, sockfd, localAddr_, peerAddr);
+  // PrintFuncName pf("defaultNewConnectionCallback");
+  // std::string connName = std::to_string(connId_);
+  // TcpConnection conn(loop_, connName, sockfd, localAddr_, peerAddr);
+  LOG << "setup connection manager:" << peerAddr.toIpPort() << " with sockfd " << sockfd << std::endl;
 }

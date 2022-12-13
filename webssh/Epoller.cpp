@@ -67,8 +67,6 @@ void Epoller::updateChannel(Channel* channel)
     }
 }
 
-
-
 void Epoller::update(int operation, Channel* channel){
   
   struct epoll_event event;

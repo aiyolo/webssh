@@ -11,6 +11,33 @@
 #include <thread>
 #include <assert.h>
 
+
+#define LOG_BASE(level, format, ...)                                           \
+  do {                                                                         \
+    Logger *log = Logger::Instance();                                                \
+    if (log->isOpen() && (log->getLevel() <= level)) {                         \
+      log->write(level, format, ##__VA_ARGS__);                                \
+      log->Flush();                                                            \
+    }                                                                          \
+  } while (0);
+
+#define LOG_DEBUG(format, ...)                                                 \
+  do {                                                                         \
+    LOG_BASE(0, format, ##__VA_ARGS__)                                         \
+  } while (0);
+#define LOG_INFO(format, ...)                                                  \
+  do {                                                                         \
+    LOG_BASE(1, format, ##__VA_ARGS__)                                         \
+  } while (0);
+#define LOG_WARN(format, ...)                                                  \
+  do {                                                                         \
+    LOG_BASE(2, format, ##__VA_ARGS__)                                         \
+  } while (0);
+#define LOG_ERROR(format, ...)                                                 \
+  do {                                                                         \
+    LOG_BASE(3, format, ##__VA_ARGS__)                                         \
+  } while (0);
+
 template <class T> class BlockDeque {
 public:
   explicit BlockDeque(size_t maxCapacity = 1000);
@@ -22,39 +49,28 @@ public:
   size_t size();
   size_t capacity();
   T front();
-
   T back();
-
   void push_back(const T &item);
-
   void push_front(const T &item);
-
   bool pop(T &item);
-
   bool pop(T &item, int timeout);
-
   void flush();
 
 private:
   std::deque<T> deq_;
-
   size_t capacity_;
-
   std::mutex mtx_;
-
   bool isClose_;
-
   std::condition_variable condConsumer_;
-
   std::condition_variable condProducer_;
 };
 
 
-class Log {
+class Logger {
 public:
   void init(int level, const char *path = "./log", const char *suffix = ".log",
             int maxQueueCapacity = 1024);
-  static Log *Instance();
+  static Logger *Instance();
   static void flushLogThread();
   void write(int level, const char *format, ...);
   void Flush();
@@ -63,9 +79,9 @@ public:
   bool isOpen() { return isOpen_; };
 
 private:
-  Log();
+  Logger();
+  virtual ~Logger();
   void appendLogLevelTitle_(int level);
-  virtual ~Log();
   void asyncWrite_();
 
 private:
@@ -77,16 +93,15 @@ private:
   const char *suffix_;
 
   int MAX_LINES_;
-
   int lineCount_;
   int toDay_;
 
   bool isOpen_;
-  Buffer buff_;
   int level_;
   bool isAsync_;
 
   FILE *fp_;
+  Buffer buff_;
 
   std::unique_ptr<BlockDeque<std::string>> deque_;
   std::unique_ptr<std::thread> writeThread_;

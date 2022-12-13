@@ -1,5 +1,6 @@
 #include "Logger.h"
 #include <stdarg.h> // va_start va_end
+#include "util.h"
 
 template <class T>
 BlockDeque<T>::BlockDeque(size_t maxCapacity) : capacity_(maxCapacity) {
@@ -107,33 +108,7 @@ template <class T> bool BlockDeque<T>::pop(T &item, int timeout) {
   return true;
 }
 
-#define LOG_BASE(level, format, ...)                                           \
-  do {                                                                         \
-    Log *log = Log::Instance();                                                \
-    if (log->isOpen() && (log->getLevel() <= level)) {                         \
-      log->write(level, format, ##__VA_ARGS__);                                \
-      log->Flush();                                                            \
-    }                                                                          \
-  } while (0);
-
-#define LOG_DEBUG(format, ...)                                                 \
-  do {                                                                         \
-    LOG_BASE(0, format, ##__VA_ARGS__)                                         \
-  } while (0);
-#define LOG_INFO(format, ...)                                                  \
-  do {                                                                         \
-    LOG_BASE(1, format, ##__VA_ARGS__)                                         \
-  } while (0);
-#define LOG_WARN(format, ...)                                                  \
-  do {                                                                         \
-    LOG_BASE(2, format, ##__VA_ARGS__)                                         \
-  } while (0);
-#define LOG_ERROR(format, ...)                                                 \
-  do {                                                                         \
-    LOG_BASE(3, format, ##__VA_ARGS__)                                         \
-  } while (0);
-
-Log::Log() {
+Logger::Logger() {
   lineCount_ = 0;
   isAsync_ = false;
   writeThread_ = nullptr;
@@ -142,8 +117,9 @@ Log::Log() {
   fp_ = nullptr;
 }
 
-Log::~Log() {
-  if (writeThread_ && writeThread_->joinable()) {
+Logger::~Logger() {
+  PrintFuncName pf("Logger::~Logger");
+  if(writeThread_ && writeThread_->joinable()) {
     while (!deque_->empty()) {
       deque_->flush();
     };
@@ -157,17 +133,17 @@ Log::~Log() {
   }
 }
 
-int Log::getLevel() {
+int Logger::getLevel() {
   std::lock_guard<std::mutex> locker(mtx_);
   return level_;
 }
 
-void Log::setLevel(int level) {
+void Logger::setLevel(int level) {
   std::lock_guard<std::mutex> locker(mtx_);
   level_ = level;
 }
 
-void Log::init(int level = 1, const char *path, const char *suffix,
+void Logger::init(int level = 1, const char *path, const char *suffix,
                int maxQueueSize) {
   isOpen_ = true;
   level_ = level;
@@ -217,7 +193,7 @@ void Log::init(int level = 1, const char *path, const char *suffix,
   }
 }
 
-void Log::write(int level, const char *format, ...) {
+void Logger::write(int level, const char *format, ...) {
   struct timeval now = {0, 0};
   gettimeofday(&now, nullptr);
   time_t tSec = now.tv_sec;
@@ -281,7 +257,7 @@ void Log::write(int level, const char *format, ...) {
   }
 }
 
-void Log::appendLogLevelTitle_(int level) {
+void Logger::appendLogLevelTitle_(int level) {
   switch (level) {
   case 0:
     buff_.append("[debug]: ", 9);
@@ -301,14 +277,14 @@ void Log::appendLogLevelTitle_(int level) {
   }
 }
 
-void Log::Flush() {
+void Logger::Flush() {
   if (isAsync_) {
     deque_->flush();
   }
   fflush(fp_);
 }
 
-void Log::asyncWrite_() {
+void Logger::asyncWrite_() {
   std::string str = "";
   // log init时创建的线程,一直在等待生产者投喂
   while (deque_->pop(str)) {
@@ -317,9 +293,9 @@ void Log::asyncWrite_() {
   }
 }
 
-Log *Log::Instance() {
-  static Log inst;
+Logger *Logger::Instance() {
+  static Logger inst;
   return &inst;
 }
 
-void Log::flushLogThread() { Log::Instance()->asyncWrite_(); }
+void Logger::flushLogThread() { Logger::Instance()->asyncWrite_(); }

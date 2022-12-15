@@ -11,6 +11,8 @@ void defaultOnConnectionCallback(const TcpConnectionPtr &conn)
 void defaultOnMessageCallback(const TcpConnectionPtr& conn, Buffer* buffer)
 {
     std::string msg(buffer->retrieveAllAsString());
-    LOG << conn->getConnName() << " recv " << msg << std::endl; 
-    conn->send(msg);
+    LOG << conn->getConnName() << " recv " << msg << std::endl;
+    std::string response = "HTTP/1.1 200 OK\n\n";
+    response += "<html><head><title>Hello World</title></head><body><h1>Hello World!</h1></body></html>\n"; 
+    conn->send(response);
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include "Callbacks.h"
 #include "Epoller.h"
 #include <vector>
 #include <memory> // unique_ptr
@@ -12,7 +13,7 @@ public:
     void loop();
     void doPendingFunctors(); // 处理其他事件
     void updateChannel(Channel *channel);
-
+    void removeChannel(Channel* channel);
     bool quit_;
     std::vector<Channel*> activeChannels_;
     std::unique_ptr<Epoller> poller_;

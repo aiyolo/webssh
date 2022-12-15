@@ -11,7 +11,7 @@ public:
     ~Epoller();
     void poll(int timeout, std::vector<Channel*> *activeChannels); 
     void updateChannel(Channel* channel);
-
+    void removeChannel(Channel* channel);
     void update(int operation, Channel* channel);
     std::string opToString(int op);
     int epfd_;

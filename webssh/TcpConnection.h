@@ -31,13 +31,17 @@ public:
 	void handleClose();
 	void handleError();
 
-	void setOnConnectionCallback(OnConnectionCallback& cb);
-	void setOnMessageCallback(OnMessageCallback& cb);
-	void setOnWriteCompleteCallback(OnWriteCompleCallback& cb);
-	void setOnCloseCallback(OnCloseCallback& cb);
+	void connectDestroyed();
+	void setOnConnectionCallback(const OnConnectionCallback& cb);
+	void setOnMessageCallback(const OnMessageCallback& cb);
+	void setOnWriteCompleteCallback(const OnWriteCompleCallback& cb);
+	void setOnCloseCallback(const OnCloseCallback& cb);
 
 	InetAddress getLocalAddr() const;
 	InetAddress getPeerAddr() const;
+
+	void connectionEstablished();
+	void connectionDestroyed();
 
 	EventLoop*		  loop_;
 	const std::string connName_;

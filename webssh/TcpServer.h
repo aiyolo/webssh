@@ -16,7 +16,7 @@ public:
     ~TcpServer();
     void start();
     void newConnection(int sockfd, const InetAddress& peerAddr);
-    
+    void removeConnectionInLoop(const TcpConnectionPtr& conn); 
     
     EventLoop* loop_;
     std::string name_;

@@ -95,7 +95,8 @@ void TcpConnection::handleClose()
 {
 	PrintFuncName pf("TcpConnection handleClose...\n");
 	channel_->disableAll();
-	//   onCloseCallback_(this);
+	TcpConnectionPtr guardThis(shared_from_this());
+	onCloseCallback_(guardThis);
 }
 
 void TcpConnection::handleError()
@@ -103,22 +104,28 @@ void TcpConnection::handleError()
 	PrintFuncName pf("TcpConnection handleError...\n");
 }
 
-void TcpConnection::setOnConnectionCallback(OnConnectionCallback& cb)
+void TcpConnection::connectDestroyed()
+{
+	channel_->disableAll();
+	channel_->remove();
+}
+
+void TcpConnection::setOnConnectionCallback(const OnConnectionCallback& cb)
 {
 	onConnectionCallback_ = cb;
 }
 
-void TcpConnection::setOnCloseCallback(OnCloseCallback& cb)
+void TcpConnection::setOnCloseCallback(const OnCloseCallback& cb)
 {
 	onCloseCallback_ = cb;
 }
 
-void TcpConnection::setOnMessageCallback(OnMessageCallback& cb)
+void TcpConnection::setOnMessageCallback(const OnMessageCallback& cb)
 {
 	onMessageCallback_ = cb;
 }
 
-void TcpConnection::setOnWriteCompleteCallback(OnWriteCompleCallback& cb)
+void TcpConnection::setOnWriteCompleteCallback(const OnWriteCompleCallback& cb)
 {
 	onWriteCompleteCallback_ = cb;
 }
@@ -130,4 +137,10 @@ InetAddress TcpConnection::getLocalAddr() const
 InetAddress TcpConnection::getPeerAddr() const
 {
 	return peerAddr_;
+}
+
+void TcpConnection::connectionEstablished()
+{
+	channel_->tie(shared_from_this());
+	channel_->enableReading();
 }

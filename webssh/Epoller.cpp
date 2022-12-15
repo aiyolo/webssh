@@ -67,6 +67,18 @@ void Epoller::updateChannel(Channel* channel)
     }
 }
 
+void Epoller::removeChannel(Channel *channel)
+{
+  int fd = channel->getFd();
+  int index = channel->getIndex();
+  size_t n = channels_.erase(fd);
+  assert(n==1);
+  if(index==kAdded){
+    update(EPOLL_CTL_DEL, channel);
+  }
+  channel->setIndex(kNew);
+}
+
 void Epoller::update(int operation, Channel* channel){
   
   struct epoll_event event;

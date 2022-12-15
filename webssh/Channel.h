@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <functional>
 #include "Callbacks.h"
@@ -11,6 +12,7 @@ class Channel {
 public:
   Channel(EventLoop *loop, int fd);
   ~Channel();
+  void tie(const std::shared_ptr<void>& sp);
   void enableReading();
   void disableReading();
   void enableWriting();
@@ -20,6 +22,7 @@ public:
   bool isReading();
   bool isWriting();
   void handleEvent(); // todo 如何处理事件
+  void handleEventWithGuard();
 
   void setOnReadEventCallback(const OnReadEventCallback& cb);
 
@@ -43,7 +46,9 @@ public:
   std::string reventsToString() const;
 
   static std::string eventsToString(uint32_t events) ;
-
+  void remove();
+  void removeChannel();
+  
   static const uint32_t kNoneEvent;
   static const uint32_t kReadEvent;
   static const uint32_t kWriteEvent;
@@ -54,6 +59,8 @@ public:
   uint32_t events_;
   uint32_t revents_;
   // Epoller* epoller_;
+  std::weak_ptr<void> tie_;
+  bool tied_;
 
   OnReadEventCallback onReadEventCallback_;
   OnWriteEventCallback onWriteEventCallback_;

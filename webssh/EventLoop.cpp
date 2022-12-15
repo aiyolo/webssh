@@ -29,6 +29,11 @@ void EventLoop::updateChannel(Channel *channel)
     PrintFuncName pf("EventLoop::updateChannel\n");
     poller_->updateChannel(channel);
 }
+
+void EventLoop::removeChannel(Channel* channel)
+{
+    poller_->removeChannel(channel);
+}
 void EventLoop::doPendingFunctors(){
     
 }

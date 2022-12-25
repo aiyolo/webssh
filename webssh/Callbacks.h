@@ -9,7 +9,7 @@ class Buffer;
 class TcpConnection;
 class InetAddress;
 class Channel;
-
+class EventLoop;
 
 template <typename T> T *getPointer(const std::shared_ptr<T> &ptr) {
   return ptr.get();
@@ -38,6 +38,9 @@ using OnReadEventCallback = std::function<void()>;
 using OnWriteEventCallback = std::function<void()>;
 using OnCloseEventCallback = std::function<void()>;
 using OnErrorEventCallback = std::function<void()>;
+
+using ThreadInitCallback = std::function<void(EventLoop*)>;
+using Functor = std::function<void()>;
 
 void defaultOnConnectionCallback(const TcpConnectionPtr&conn);
 

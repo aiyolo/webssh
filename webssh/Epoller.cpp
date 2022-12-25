@@ -1,6 +1,7 @@
 #include "Epoller.h"
 #include "Channel.h"
 #include "util.h"
+#include <cerrno>
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <vector>
@@ -96,7 +97,7 @@ void Epoller::poll(int timeout, std::vector<Channel *> *activeChannels) {
   PrintFuncName pf("Epoller::poll");
   int nfds = ::epoll_wait(epfd_, &*events_.begin(), events_.size(), timeout);
   if (nfds < 0) {
-    LOG << "epoll_wait error...\n";
+    LOG << "epoll_wait error...\n" << nfds << errno;
   }
   for (int i = 0; i < nfds; i++) {
     Channel *ch = static_cast<Channel *>(events_[i].data.ptr);

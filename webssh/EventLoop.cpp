@@ -9,14 +9,16 @@
 #include <sys/eventfd.h>   // eventfd
 #include <sys/types.h>
 #include <thread>
+#include <assert.h>
 
 EventLoop::EventLoop()
 	: quit_(false)
 	, callingPendingFunctors_(false)
 	, wakeupFd_(createEventFd())
+	, eventHandling_(false)
 	, wakeupChannel_(new Channel(this, wakeupFd_))
 	, currentActiveChannel_(nullptr)
-	, poller_(new Epoller())
+	, poller_(new Epoller(this))
 	, threadId_(std::this_thread::get_id())
 {
 	wakeupChannel_->setOnReadEventCallback(std::bind(&EventLoop::readWakeupFd, this));
@@ -28,11 +30,20 @@ EventLoop::~EventLoop()
 
 void EventLoop::loop()
 {
-	PrintFuncName pf("EventLoop::loop");
+	// std::cout << "threadId_:" << threadId_ << "this threadId:" << std::this_thread::get_id() << std::endl;
+	assertInLoopThread();
+	// PrintFuncName pf("EventLoop::loop");
 	while (!quit_) {
 		activeChannels_.clear();
 		poller_->poll(kPollTimeMs, &activeChannels_);
-		for (Channel* channel : activeChannels_) { channel->handleEvent(); }
+		eventHandling_ = true;
+		for (Channel* channel : activeChannels_)
+		 { 
+			currentActiveChannel_ = channel;
+			currentActiveChannel_->handleEvent();
+		}
+		currentActiveChannel_ = nullptr;
+		eventHandling_ = false;
 		doPendingFunctors();
 	}
 }
@@ -43,12 +54,18 @@ void EventLoop::quit()
 }
 void EventLoop::updateChannel(Channel* channel)
 {
-	PrintFuncName pf("EventLoop::updateChannel\n");
+	// PrintFuncName pf("EventLoop::updateChannel\n");
+	assertInLoopThread();
 	poller_->updateChannel(channel);
 }
 
 void EventLoop::removeChannel(Channel* channel)
 {
+	assertInLoopThread();
+	if(eventHandling_)
+	{
+		assert(currentActiveChannel_==channel || std::find(activeChannels_.begin(), activeChannels_.end(), channel) == activeChannels_.end());
+	}
 	poller_->removeChannel(channel);
 }
 
@@ -66,7 +83,9 @@ void EventLoop::doPendingFunctors()
 
 void EventLoop::runInLoop(const Functor& cb)
 {
+	// std::cout << "runinloop:" << std::this_thread::get_id() << std::endl;
 	if (isInLoopThread()) {
+		// std::cout << "inloopthread threadId_:" << threadId_ << std::endl;
 		cb();
 	}
 	else {
@@ -76,11 +95,12 @@ void EventLoop::runInLoop(const Functor& cb)
 
 void EventLoop::queueInLoop(const Functor& cb)
 {
+	// std::cout << "queueinloop threadId_:" << threadId_ << std::endl;
 	{
 		std::lock_guard<std::mutex> lock(mutex_);
 		pendingFunctors_.push_back(std::move(cb));
 	}
-	if (!isInLoopThread() || callingPendingFunctors_) { // note
+	if (!isInLoopThread() || callingPendingFunctors_) {	  // note
 		wakeup();
 	}
 }
@@ -117,4 +137,12 @@ void EventLoop::readWakeupFd()
 bool EventLoop::isInLoopThread()
 {
 	return threadId_ == std::this_thread::get_id();
+}
+
+
+void EventLoop::assertInLoopThread()
+{
+	if (!isInLoopThread()) {
+		LOG << "not isInLoopThread...\n";
+	}
 }

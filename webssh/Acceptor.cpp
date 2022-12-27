@@ -10,9 +10,10 @@ Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddr)
       newConnectionCallback_(defaultNewConnnectionCallback), acceptSocket_(),
       acceptChannel(loop, acceptSocket_.getFd()), connId_(0) {
   LOG << "server addr:" << listenAddr.toIpPort() << std::endl;
-  acceptSocket_.bind(listenAddr);
   acceptSocket_.setReuseAddr();
+  acceptSocket_.setReusePort();
   acceptSocket_.setNonBlocking();
+  acceptSocket_.bind(listenAddr);
   // acceptsocket上有连接时，触发读事件，使用accept方法处理
   acceptChannel.setOnReadEventCallback(std::bind(&Acceptor::accept, this));
 }

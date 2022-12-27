@@ -4,6 +4,9 @@
 #include <sys/uio.h>   // readv
 #include <unistd.h>
 #include <vector>
+#include <algorithm>
+
+const char Buffer::kCRLF[] = "\r\n";
 
 // 仿照muduo 预留一部分空间
 Buffer::Buffer(size_t initBufferSize)
@@ -71,12 +74,12 @@ std::string Buffer::retrieveAllAsString()
 	return str;
 }
 
-const char* Buffer::beginWriteConst() const
+char* Buffer::beginWrite()
 {
 	return begin() + writeIndex_;
 }
 
-char* Buffer::beginWrite()
+const char* Buffer::beginWrite() const
 {
 	return begin() + writeIndex_;
 }
@@ -163,4 +166,12 @@ void Buffer::makeSpace(size_t len)
 		writeIndex_ = readIndex_ + readable;
 		assert(readable == readableBytes());
 	}
+}
+
+const char* Buffer::findCRLF() const{
+	// const char* crlf = std::search(peek(), beginWrite(), kCRLF, kCRLF+2);
+	// const char* crlf = std::find(peek(), beginWrite(), "\r\n");
+	// 在peek() 和beginWrite()之间找 第一个 "\r\n"；
+	const char* crlf = std::search(peek(), beginWrite(), kCRLF, kCRLF+2);
+	return crlf == beginWrite() ? NULL: crlf;
 }

@@ -1,5 +1,6 @@
 #include "TcpServer.h"
 #include "Buffer.h"
+#include "Callbacks.h"
 #include "EventLoop.h"
 #include "InetAddress.h"
 #include "TcpConnection.h"
@@ -29,7 +30,7 @@ void TcpServer::start()
 
 void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
 {
-
+	loop_->assertInLoopThread();
 	std::string					   connName	 = name_ + "-" + peerAddr.toIpPort() + "#" + std::to_string(connId_);
 	InetAddress					   localAddr = acceptor_->getLocalAddr();
 	TcpConnectionPtr conn(new TcpConnection(loop_, connName, sockfd, localAddr, peerAddr));
@@ -38,7 +39,7 @@ void TcpServer::newConnection(int sockfd, const InetAddress& peerAddr)
 	conn->setOnCloseCallback(std::bind(&TcpServer::removeConnectionInLoop, this, std::placeholders::_1));
 	conn->setOnMessageCallback(onMessageCallback_);
 	conn->setOnWriteCompleteCallback(onWriteCompleteCallback_);
-	conn->connectionEstablished();	
+	loop_->runInLoop(std::bind(&TcpConnection::connectionEstablished, conn));
 }
 
 void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& conn)
@@ -46,4 +47,19 @@ void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& conn)
 	size_t n = connectionMap_.erase(conn->getConnName());
 	assert(n == 1);
 	conn->connectDestroyed();
+}
+
+void TcpServer::setOnConnectionCallback(const OnConnectionCallback &cb)
+{
+	onConnectionCallback_ = cb;
+}
+
+void TcpServer::setOnMessageCallback(const OnMessageCallback &cb)
+{
+	onMessageCallback_ = cb;
+}
+
+void TcpServer::setOnWriteCompleteCallback(const OnWriteCompleCallback &cb)
+{
+	onWriteCompleteCallback_ = cb;
 }

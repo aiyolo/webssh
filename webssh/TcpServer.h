@@ -18,6 +18,10 @@ public:
     void newConnection(int sockfd, const InetAddress& peerAddr);
     void removeConnectionInLoop(const TcpConnectionPtr& conn); 
     
+    void setOnConnectionCallback(const OnConnectionCallback& cb);
+    void setOnMessageCallback(const OnMessageCallback& cb);
+    void setOnWriteCompleteCallback(const OnWriteCompleCallback& cb);
+
     EventLoop* loop_;
     std::string name_;
     int connId_;

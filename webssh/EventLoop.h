@@ -25,10 +25,12 @@ public:
     void wakeup();
     int createEventFd();
     void readWakeupFd();
+    void assertInLoopThread();
 
     bool quit_;
     bool callingPendingFunctors_;
     int wakeupFd_;
+    bool eventHandling_;
     Channel* wakeupChannel_;
     Channel* currentActiveChannel_;
     std::mutex mutex_;

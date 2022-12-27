@@ -22,6 +22,8 @@ public:
   static ssize_t writev(int sockfd, const struct iovec *iov, int iovcnt);
   static void close(int sockfd);
   static void shutdownWrite(int sockfd);
+  
+  void shutdownWrite();
 
   void setTcpNoDelay();
   void setReuseAddr();

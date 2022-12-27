@@ -2,7 +2,7 @@
 #include <atomic>
 #include <iostream>
 
-#define LOG (std::cerr)
+#define LOG (std::cout)
 
 class copyable {
 protected:

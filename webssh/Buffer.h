@@ -26,8 +26,9 @@ public:
 	std::string retrieveAsString(size_t len);
 	std::string retrieveAllAsString();
 
-	const char* beginWriteConst() const;
+	const char* beginWrite() const;
 	char*		beginWrite();
+
 
 	void append(const char* data, size_t len);
 	void append(const std::string& str);
@@ -58,4 +59,5 @@ private:
 	std::vector<char> buffer_;
 	size_t			  readIndex_;
 	size_t			  writeIndex_;
+	static const char kCRLF[];
 };

@@ -118,7 +118,7 @@ Logger::Logger() {
 }
 
 Logger::~Logger() {
-  PrintFuncName pf("Logger::~Logger");
+  // PrintFuncName pf("Logger::~Logger");
   if(writeThread_ && writeThread_->joinable()) {
     while (!deque_->empty()) {
       deque_->flush();

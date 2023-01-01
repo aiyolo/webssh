@@ -6,16 +6,15 @@
 #include "Socket.h"
 #include "util.h"
 #include <asm-generic/errno.h>
-#include <sys/types.h>
 #include <assert.h>
+#include <sys/types.h>
 
 
-std::atomic<int> TcpConnection::connId_ = -1;
-
-TcpConnection::TcpConnection(EventLoop* loop, const std::string& connName, int sockfd, const InetAddress& localAddr,
+TcpConnection::TcpConnection(EventLoop* loop, const std::string& connName, int connId, int sockfd, const InetAddress& localAddr,
 							 const InetAddress& peerAddr)
 	: loop_(loop)
 	, connName_(connName)
+	, connId_(connId)
 	, state_(ConnState::kConnecting)
 	, socket_(new Socket(sockfd))
 	, channel_(new Channel(loop, sockfd))
@@ -23,7 +22,6 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& connName, int s
 	, peerAddr_(peerAddr)
 	, highWaterMark_(64 * 1024 * 1024)
 {
-	connId_++;
 	std::cout << "new connId_:" << connId_ << std::endl;
 	channel_->setOnReadEventCallback(std::bind(&TcpConnection::handleRead, this));
 	channel_->setOnWriteEventCallback(std::bind(&TcpConnection::handleWrite, this));
@@ -101,11 +99,13 @@ void TcpConnection::sendInLoop(const void* data, size_t len)
 
 void TcpConnection::handleRead()
 {
-	PrintFuncName pf("TcpConnection::handleRead...");
+	// PrintFuncName pf("TcpConnection::handleRead...");
 	int			  savedErrno = 0;
 	ssize_t		  n			 = inputBuffer_.readFd(channel_->getFd(), &savedErrno);
 	if (n > 0) {
-		onMessageCallback_(shared_from_this(), &inputBuffer_);
+		if (onMessageCallback_) {
+			onMessageCallback_(shared_from_this(), &inputBuffer_);
+		}
 	}
 	else if (n == 0) {
 		handleClose();
@@ -118,7 +118,7 @@ void TcpConnection::handleRead()
 
 void TcpConnection::handleWrite()
 {
-	PrintFuncName pf("TcpConnection handleWrite...\n");
+	// PrintFuncName pf("TcpConnection handleWrite...\n");
 	if (channel_->isWriting()) {
 		ssize_t n = socket_->write(channel_->getFd(), outputBuffer_.peek(), outputBuffer_.readableBytes());
 		if (n > 0) {
@@ -133,7 +133,7 @@ void TcpConnection::handleWrite()
 
 void TcpConnection::handleClose()
 {
-	PrintFuncName pf("TcpConnection handleClose...\n");
+	// PrintFuncName pf("TcpConnection handleClose...\n");
 	channel_->disableAll();
 	TcpConnectionPtr guardThis(shared_from_this());
 	onCloseCallback_(guardThis);
@@ -141,13 +141,35 @@ void TcpConnection::handleClose()
 
 void TcpConnection::handleError()
 {
-	PrintFuncName pf("TcpConnection handleError...\n");
+	// PrintFuncName pf("TcpConnection handleError...\n");
+}
+
+void TcpConnection::connectEstablished()
+{
+	loop_->assertInLoopThread();
+	assert(state_ == ConnState::kConnecting);
+	setState(ConnState::kConnected);
+	channel_->tie(shared_from_this());
+	channel_->enableReading();
+	onConnectionCallback_(shared_from_this());
 }
 
 void TcpConnection::connectDestroyed()
 {
-	channel_->disableAll();
+	loop_->assertInLoopThread();
+	if(state_==ConnState::kConnected)
+	{
+		setState(ConnState::kDisconnected);
+		channel_->disableAll();
+		onConnectionCallback_(shared_from_this());
+
+	}
 	channel_->remove();
+}
+
+EventLoop* TcpConnection::getLoop() const
+{
+	return loop_;
 }
 
 void TcpConnection::setOnConnectionCallback(const OnConnectionCallback& cb)
@@ -195,15 +217,7 @@ const HttpContext& TcpConnection::getContext() const
 	return context_;
 }
 
-void TcpConnection::connectionEstablished()
-{
-	loop_->assertInLoopThread();
-	assert(state_ == ConnState::kConnecting);
-	setState(ConnState::kConnected);
-	channel_->tie(shared_from_this());
-	channel_->enableReading();
-	onConnectionCallback_(shared_from_this());
-}
+
 
 void TcpConnection::send(Buffer* buff)
 {

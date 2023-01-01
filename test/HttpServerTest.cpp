@@ -46,6 +46,7 @@ int main()
 	EventLoop  loop;
 	HttpServer server(&loop, InetAddress(8888), "httpserver");
 	server.setHttpCallback(onRequest);
+  server.setThreadNum(8);
 	server.start();
 	loop.loop();
 }

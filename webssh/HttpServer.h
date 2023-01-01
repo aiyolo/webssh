@@ -15,6 +15,7 @@ public:
     HttpServer(EventLoop* loop, const InetAddress& listenAddr, const std::string& name);
     ~HttpServer();
     void setHttpCallback(const HttpCallback& cb);
+    void setThreadNum(int numThreads);
     void start();
     static void defaultHttpCallback(const HttpRequest& req, HttpResponse* resp);
     void onConnection(const TcpConnectionPtr& conn);

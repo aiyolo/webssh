@@ -13,6 +13,7 @@ public:
     ~EventLoopThreadPool();
 
     void start();
+    void setThreadNum(int numThreads);
     EventLoop* getNextLoop();
 
     EventLoop*	baseloop_;

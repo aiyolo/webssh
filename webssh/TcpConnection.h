@@ -18,7 +18,7 @@ class InetAddress;
 class TcpConnection : public std::enable_shared_from_this<TcpConnection>
 {
 public:
-	TcpConnection(EventLoop* loop, const std::string& connName, int sockfd, const InetAddress& localAddr,
+	TcpConnection(EventLoop* loop, const std::string& connName, int connId, int sockfd, const InetAddress& localAddr,
 				  const InetAddress& peerAddr);
 	~TcpConnection();
 
@@ -39,7 +39,6 @@ public:
 	void handleClose();
 	void handleError();
 
-	void connectDestroyed();
 	void setOnConnectionCallback(const OnConnectionCallback& cb);
 	void setOnMessageCallback(const OnMessageCallback& cb);
 	void setOnWriteCompleteCallback(const OnWriteCompleCallback& cb);
@@ -48,8 +47,10 @@ public:
 	InetAddress getLocalAddr() const;
 	InetAddress getPeerAddr() const;
 
-	void connectionEstablished();
-	void connectionDestroyed();
+	EventLoop* getLoop() const;
+	
+	void connectEstablished();
+	void connectDestroyed();
 
 	void setContext(const HttpContext& context);
 	const HttpContext& getContext() const;
@@ -57,7 +58,7 @@ public:
 
 	EventLoop*		  loop_;
 	const std::string connName_;
-	static std::atomic<int> connId_;
+	int connId_;
 	ConnState state_;
 	// int sockfd_;
 	std::unique_ptr<Socket>	 socket_;

@@ -55,7 +55,6 @@ void EventLoop::quit()
 }
 void EventLoop::updateChannel(Channel* channel)
 {
-	// PrintFuncName pf("EventLoop::updateChannel\n");
 	assertInLoopThread();
 	poller_->updateChannel(channel);
 }

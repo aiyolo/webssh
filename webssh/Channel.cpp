@@ -96,7 +96,7 @@ void Channel::handleEvent()
 void Channel::handleEventWithGuard()
 {
 	
-	PrintFuncName pf("Channel::handleEvent");
+	// PrintFuncName pf("Channel::handleEvent");
 	LOG << "events:" << eventsToString() << std::endl;
 	LOG << "revents:" << reventsToString() << std::endl;
 	if((revents_ & EPOLLHUP) && !(revents_ &EPOLLIN))

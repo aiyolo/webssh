@@ -9,6 +9,7 @@ void HttpServer::defaultHttpCallback(const HttpRequest &req, HttpResponse *resp)
 {
     
 }
+
 HttpServer::HttpServer(EventLoop* loop, const InetAddress& listenAddr, const std::string& name)
 	: server_(loop, name, listenAddr)
     , httpCallback_(defaultHttpCallback)
@@ -18,6 +19,11 @@ HttpServer::HttpServer(EventLoop* loop, const InetAddress& listenAddr, const std
 }
 
 HttpServer::~HttpServer(){}
+
+void HttpServer::setThreadNum(int numThreads)
+{
+    server_.setThreadNum(numThreads);
+}
 
 void HttpServer::start()
 {

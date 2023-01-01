@@ -3,6 +3,7 @@
 #include "Epoller.h"
 #include "EventLoop.h"
 #include "util.h"
+#include <iterator>
 #include <memory>
 #include <sys/epoll.h>
 #include <sys/types.h>
@@ -94,9 +95,14 @@ void Channel::handleEvent()
 
 void Channel::handleEventWithGuard()
 {
+	
 	PrintFuncName pf("Channel::handleEvent");
 	LOG << "events:" << eventsToString() << std::endl;
 	LOG << "revents:" << reventsToString() << std::endl;
+	if((revents_ & EPOLLHUP) && !(revents_ &EPOLLIN))
+	{
+		if(onCloseEventCallback_) onCloseEventCallback_();
+	}
 	if (revents_ & (EPOLLERR)) {
 		if (onErrorEventCallback_)
 			onErrorEventCallback_();
@@ -158,10 +164,10 @@ std::string Channel::eventsToString(uint32_t events)
 		str += "EPOLLOUT ";
 	}
 	if (events & EPOLLHUP) {
-		str += "EPOLLHUP ";
+		str += "EPOLLHUP "; // means both hald-sockets hung
 	}
 	if (events & EPOLLRDHUP) {
-		str += "EPOLLRDHUP ";
+		str += "EPOLLRDHUP "; // means received fin or called shutdown(SHUT_RD)
 	}
 	if (events & EPOLLERR) {
 		str += "EPOLLERR ";

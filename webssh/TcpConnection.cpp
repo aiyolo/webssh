@@ -9,6 +9,9 @@
 #include <sys/types.h>
 #include <assert.h>
 
+
+std::atomic<int> TcpConnection::connId_ = -1;
+
 TcpConnection::TcpConnection(EventLoop* loop, const std::string& connName, int sockfd, const InetAddress& localAddr,
 							 const InetAddress& peerAddr)
 	: loop_(loop)
@@ -20,6 +23,8 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& connName, int s
 	, peerAddr_(peerAddr)
 	, highWaterMark_(64 * 1024 * 1024)
 {
+	connId_++;
+	std::cout << "new connId_:" << connId_ << std::endl;
 	channel_->setOnReadEventCallback(std::bind(&TcpConnection::handleRead, this));
 	channel_->setOnWriteEventCallback(std::bind(&TcpConnection::handleWrite, this));
 	channel_->setOnErrorEventCallback(std::bind(&TcpConnection::handleError, this));
@@ -27,7 +32,9 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& connName, int s
 }
 
 TcpConnection::~TcpConnection()
-{}
+{
+	std::cout << "delete connId_" << connId_ << std::endl;
+}
 
 std::string TcpConnection::getConnName() const
 {

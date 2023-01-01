@@ -87,7 +87,7 @@ void Socket::close(int sockfd)
 void Socket::shutdownWrite(int sockfd)
 {
 	if (::shutdown(sockfd, SHUT_WR) < 0) {
-		LOG << "shutdownWrite error..." << std::endl;
+		LOG << "shutdownWrite error..." << strerror(errno) << std::endl;
 	}
 }
 

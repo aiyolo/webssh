@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <string>
 #include "HttpContext.h"
+#include <atomic>
 
 class Channel;
 class EventLoop;
@@ -52,8 +53,11 @@ public:
 
 	void setContext(const HttpContext& context);
 	const HttpContext& getContext() const;
+
+
 	EventLoop*		  loop_;
 	const std::string connName_;
+	static std::atomic<int> connId_;
 	ConnState state_;
 	// int sockfd_;
 	std::unique_ptr<Socket>	 socket_;

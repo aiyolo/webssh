@@ -41,6 +41,7 @@ void EventLoop::loop()
 		 { 
 			currentActiveChannel_ = channel;
 			currentActiveChannel_->handleEvent();
+			// channel->handleEvent();
 		}
 		currentActiveChannel_ = nullptr;
 		eventHandling_ = false;

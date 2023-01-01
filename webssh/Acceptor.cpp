@@ -3,6 +3,7 @@
 #include "TcpConnection.h"
 #include "util.h"
 #include <cstdio>
+#include <cstring>
 
 // 配置阶段，不要执行启动的操作
 Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddr)
@@ -34,7 +35,7 @@ void Acceptor::accept() {
   InetAddress peerAddr;
   int connfd = acceptSocket_.accept(&peerAddr);
   if (connfd < 0) {
-    LOG << "acceptSocket_.accept error...";
+    LOG << "acceptSocket_.accept error..." << std::strerror(errno) << std::endl;
   }
   LOG << "accept client:" << peerAddr.toIpPort() << std::endl;
   if (newConnectionCallback_) {

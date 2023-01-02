@@ -15,7 +15,8 @@ public:
     void removeChannel(Channel* channel);
     void update(int operation, Channel* channel);
     std::string opToString(int op);
-
+    bool hasChannel(Channel* channel) const;
+    void assertInLoopThread() const;
     int epfd_;
     std::vector<struct epoll_event> events_;
     std::map<int,Channel*> channels_;

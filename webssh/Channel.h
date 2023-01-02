@@ -48,6 +48,7 @@ public:
   static std::string eventsToString(uint32_t events) ;
   void remove();
   void removeChannel();
+  EventLoop* ownerLoop();
   
   static const uint32_t kNoneEvent;
   static const uint32_t kReadEvent;

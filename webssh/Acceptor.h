@@ -26,7 +26,7 @@ public:
     Socket acceptSocket_;
     Channel acceptChannel;
     // Acceptor在单线程里，不用使用互斥量
-    int connId_; 
+    int idleFd_;
     // Acceptor 要管理连接，需要保存connection实例，使用map保存connName->connection实例的映射
     // 这就要求在newConnectionCallback_创建的实例conn，在离开函数时也存在，所以需要动态内存管理；
 

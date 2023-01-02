@@ -1,20 +1,21 @@
 #include "../webssh/HttpServer.h"
 #include "../webssh/HttpRequest.h"
 #include "../webssh/HttpResponse.h"
+#include "../webssh/util.h"
 
 extern char favicon[555];
 
 void onRequest(const HttpRequest& req, HttpResponse* resp)
 {
-   std::cout << "Headers " << " " << req.getPath() << std::endl;
-  if (1)
-  {
-    const std::map<std::string, std::string>& headers = req.getHeaders();
-    for (const auto& header : headers)
-    {
-      std::cout << header.first << ": " << header.second << std::endl;
-    }
-  }
+  //  LOG << "Headers " << " " << req.getPath() << std::endl;
+  // if (1)
+  // {
+  //   const std::map<std::string, std::string>& headers = req.getHeaders();
+  //   for (const auto& header : headers)
+  //   {
+  //     LOG << header.first << ": " << header.second << std::endl;
+  //   }
+  // }
 	if (req.getPath() == "/") {
 		resp->setStatusCode(HttpStatusCode::k200);
 		resp->setStatusMessage("OK");
@@ -46,7 +47,7 @@ int main()
 	EventLoop  loop;
 	HttpServer server(&loop, InetAddress(8888), "httpserver");
 	server.setHttpCallback(onRequest);
-  server.setThreadNum(8);
+  server.setThreadNum(10);
 	server.start();
 	loop.loop();
 }

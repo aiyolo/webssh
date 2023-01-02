@@ -7,6 +7,7 @@
 #include "util.h"
 #include <asm-generic/errno.h>
 #include <assert.h>
+#include <cstring>
 #include <sys/types.h>
 
 
@@ -22,7 +23,7 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& connName, int c
 	, peerAddr_(peerAddr)
 	, highWaterMark_(64 * 1024 * 1024)
 {
-	std::cout << "new connId_:" << connId_ << std::endl;
+	// LOG << "new connId_:" << connId_ << std::endl;
 	channel_->setOnReadEventCallback(std::bind(&TcpConnection::handleRead, this));
 	channel_->setOnWriteEventCallback(std::bind(&TcpConnection::handleWrite, this));
 	channel_->setOnErrorEventCallback(std::bind(&TcpConnection::handleError, this));
@@ -31,7 +32,7 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& connName, int c
 
 TcpConnection::~TcpConnection()
 {
-	std::cout << "delete connId_" << connId_ << std::endl;
+	// LOG << "delete connId_" << connId_ << std::endl;
 }
 
 std::string TcpConnection::getConnName() const
@@ -53,7 +54,7 @@ void TcpConnection::send(const std::string& message)
 
 void TcpConnection::sendInLoop(const std::string& message)
 {
-	LOG << message << std::endl;
+	// LOG << message << std::endl;
 	sendInLoop(message.data(), message.size());
 }
 
@@ -64,7 +65,7 @@ void TcpConnection::sendInLoop(const void* data, size_t len)
 	ssize_t nwrote	  = 0;
 	size_t	remaining = len;
 	if (state_ == ConnState::kDisconnected) {
-		LOG << "connection is disconnected...\n";
+		// LOG << "connection is disconnected...\n";
 	}
 	// FIXME if是否可以省略？如果outputBuffer还有数据，那么要先发送outputBuffer之后再发送data
 	if (!channel_->isWriting() && outputBuffer_.readableBytes() == 0) {
@@ -79,7 +80,7 @@ void TcpConnection::sendInLoop(const void* data, size_t len)
 		else {
 			nwrote = 0;
 			if (errno != EWOULDBLOCK) {
-				LOG << "error ocurrs...\n";
+				// LOG << "error ocurrs...\n";
 			}
 		}
 		//
@@ -99,7 +100,7 @@ void TcpConnection::sendInLoop(const void* data, size_t len)
 
 void TcpConnection::handleRead()
 {
-	// PrintFuncName pf("TcpConnection::handleRead...");
+	loop_->assertInLoopThread();
 	int			  savedErrno = 0;
 	ssize_t		  n			 = inputBuffer_.readFd(channel_->getFd(), &savedErrno);
 	if (n > 0) {
@@ -118,7 +119,7 @@ void TcpConnection::handleRead()
 
 void TcpConnection::handleWrite()
 {
-	// PrintFuncName pf("TcpConnection handleWrite...\n");
+	loop_->assertInLoopThread();
 	if (channel_->isWriting()) {
 		ssize_t n = socket_->write(channel_->getFd(), outputBuffer_.peek(), outputBuffer_.readableBytes());
 		if (n > 0) {
@@ -127,21 +128,33 @@ void TcpConnection::handleWrite()
 			if (outputBuffer_.readableBytes() == 0) {
 				channel_->disableWriting();
 			}
+			if(onWriteCompleteCallback_)
+			{
+				loop_->runInLoop(std::bind(onWriteCompleteCallback_, shared_from_this()));
+			}
+			if(state_==ConnState::kDisconnecting)
+			{
+				shutdownInLoop();
+			}
 		}
 	}
 }
 
 void TcpConnection::handleClose()
 {
-	// PrintFuncName pf("TcpConnection handleClose...\n");
+	loop_->assertInLoopThread();
+	assert(state_==ConnState::kConnected || state_==ConnState::kDisconnecting);
+	setState(ConnState::kDisconnected);
 	channel_->disableAll();
 	TcpConnectionPtr guardThis(shared_from_this());
+	onConnectionCallback_(guardThis);
 	onCloseCallback_(guardThis);
 }
 
 void TcpConnection::handleError()
 {
-	// PrintFuncName pf("TcpConnection handleError...\n");
+	// int err = Socket::getSocketError(channel_->getFd());
+  	// LOG << "TcpConnection::handleError []" << "- SO_ERROR = " << err << " " << std::strerror(err);
 }
 
 void TcpConnection::connectEstablished()

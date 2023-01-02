@@ -7,6 +7,7 @@
 #include <memory>
 #include <sys/epoll.h>
 #include <sys/types.h>
+#include <assert.h>
 
 const uint32_t Channel::kNoneEvent	= 0;
 const uint32_t Channel::kReadEvent	= EPOLLIN | EPOLLPRI;
@@ -22,7 +23,18 @@ Channel::Channel(EventLoop* loop, int fd)
 {}
 
 Channel::~Channel()
-{}
+{
+	
+	if(loop_->isInLoopThread())
+	{
+		assert(!loop_->hasChannel(this));
+	}
+}
+
+EventLoop* Channel::ownerLoop()
+{
+	return loop_;
+}
 
 void Channel::tie(const std::shared_ptr<void>& sp)
 {
@@ -97,8 +109,8 @@ void Channel::handleEventWithGuard()
 {
 	
 	// PrintFuncName pf("Channel::handleEvent");
-	LOG << "events:" << eventsToString() << std::endl;
-	LOG << "revents:" << reventsToString() << std::endl;
+	// LOG << "events:" << eventsToString() << std::endl;
+	// LOG << "revents:" << reventsToString() << std::endl;
 	if((revents_ & EPOLLHUP) && !(revents_ &EPOLLIN))
 	{
 		if(onCloseEventCallback_) onCloseEventCallback_();

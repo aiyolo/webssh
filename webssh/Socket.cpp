@@ -87,7 +87,7 @@ void Socket::close(int sockfd)
 void Socket::shutdownWrite(int sockfd)
 {
 	if (::shutdown(sockfd, SHUT_WR) < 0) {
-		LOG << "shutdownWrite error..." << strerror(errno) << std::endl;
+		// LOG << "shutdownWrite error..." << strerror(errno) << std::endl;
 	}
 }
 
@@ -137,5 +137,18 @@ void Socket::setNonBlocking()
 	int ret	  = ::fcntl(sockfd_, F_SETFL, flags | O_NONBLOCK);
 	if (ret < 0) {
 		LOG << "setNonBlocking error...\n";
+	}
+}
+
+int Socket::getSocketError(int sockfd)
+{
+	int optval;
+	socklen_t optlen = static_cast<socklen_t>(sizeof optval);
+	if(::getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen)<0)
+	{
+		return errno;
+	}
+	else {
+		return optval;
 	}
 }

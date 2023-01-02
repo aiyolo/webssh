@@ -1,10 +1,10 @@
 #include "Buffer.h"
+#include <algorithm>
 #include <assert.h>
 #include <iostream>
 #include <sys/uio.h>   // readv
 #include <unistd.h>
 #include <vector>
-#include <algorithm>
 
 const char Buffer::kCRLF[] = "\r\n";
 
@@ -48,7 +48,9 @@ const char* Buffer::begin() const
 void Buffer::retrieve(size_t len)
 {
 	assert(len <= readableBytes());
-	if (len <= readableBytes()) { readIndex_ += len; }
+	if (len <= readableBytes()) {
+		readIndex_ += len;
+	}
 	else {
 		retrieveAll();
 	}
@@ -109,7 +111,9 @@ void Buffer::append(const Buffer& buff)
 
 void Buffer::ensureWritableBytes(size_t len)
 {
-	if (writableBytes() < len) { makeSpace(len); }
+	if (writableBytes() < len) {
+		makeSpace(len);
+	}
 	assert(writableBytes() >= len);
 }
 
@@ -130,7 +134,9 @@ ssize_t Buffer::readFd(int fd, int* savedErrno)
 	const int	  iovcnt = (writable < sizeof extrabuf) ? 2 : 1;
 	const ssize_t len	 = readv(fd, iov, iovcnt);
 	// 读出错
-	if (len < 0) { *savedErrno = errno; }
+	if (len < 0) {
+		*savedErrno = errno;
+	}
 	// buff_空间充足
 	else if (static_cast<size_t>(len) <= writable) {
 		writeIndex_ += len;
@@ -147,7 +153,9 @@ ssize_t Buffer::writeFd(int fd, int* savedErrno)
 {
 	size_t	readable = readableBytes();
 	ssize_t len		 = write(fd, peek(), readable);
-	if (len < 0) { *savedErrno = errno; }
+	if (len < 0) {
+		*savedErrno = errno;
+	}
 	else {
 		retrieve(static_cast<size_t>(len));
 	}
@@ -157,7 +165,9 @@ ssize_t Buffer::writeFd(int fd, int* savedErrno)
 void Buffer::makeSpace(size_t len)
 {
 	// 如果可写空间小于len，那么就扩展buff_的大小
-	if (writableBytes() + prependableBytes() < len + kPrependSize) { buffer_.resize(writeIndex_ + len); }
+	if (writableBytes() + prependableBytes() < len + kPrependSize) {
+		buffer_.resize(writeIndex_ + len);
+	}
 	// 否则，将可读的数据移动到前面，使得移位后的可读空间足够
 	else {
 		size_t readable = readableBytes();
@@ -168,10 +178,11 @@ void Buffer::makeSpace(size_t len)
 	}
 }
 
-const char* Buffer::findCRLF() const{
+const char* Buffer::findCRLF() const
+{
 	// const char* crlf = std::search(peek(), beginWrite(), kCRLF, kCRLF+2);
 	// const char* crlf = std::find(peek(), beginWrite(), "\r\n");
 	// 在peek() 和beginWrite()之间找 第一个 "\r\n"；
-	const char* crlf = std::search(peek(), beginWrite(), kCRLF, kCRLF+2);
-	return crlf == beginWrite() ? NULL: crlf;
+	const char* crlf = std::search(peek(), beginWrite(), kCRLF, kCRLF + 2);
+	return crlf == beginWrite() ? NULL : crlf;
 }

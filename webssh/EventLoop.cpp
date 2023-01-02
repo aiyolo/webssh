@@ -33,6 +33,7 @@ void EventLoop::loop()
 	// std::cout << "threadId_:" << threadId_ << "this threadId:" << std::this_thread::get_id() << std::endl;
 	assertInLoopThread();
 	// PrintFuncName pf("EventLoop::loop");
+	quit_ = false;
 	while (!quit_) {
 		activeChannels_.clear();
 		poller_->poll(kPollTimeMs, &activeChannels_);
@@ -52,9 +53,14 @@ void EventLoop::loop()
 void EventLoop::quit()
 {
 	quit_ = true;
+	if(!isInLoopThread())
+	{
+		wakeup();
+	}
 }
 void EventLoop::updateChannel(Channel* channel)
 {
+	assert(channel->ownerLoop() == this);
 	assertInLoopThread();
 	poller_->updateChannel(channel);
 }
@@ -144,5 +150,20 @@ void EventLoop::assertInLoopThread()
 {
 	if (!isInLoopThread()) {
 		LOG << "not isInLoopThread...\n";
+	}
+}
+
+bool EventLoop::hasChannel(Channel* channel)
+{
+	assert(channel->ownerLoop() == this);
+	assertInLoopThread();
+	return poller_->hasChannel(channel);
+}
+
+void EventLoop::printActiveChannels() const
+{
+	for(const auto& channel: activeChannels_)
+	{
+		LOG << "{" << channel->reventsToString() << "} ";
 	}
 }

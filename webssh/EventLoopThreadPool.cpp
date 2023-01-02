@@ -1,7 +1,9 @@
 #include "EventLoopThreadPool.h"
 #include "EventLoop.h"
 #include "EventLoopThread.h"
+#include "Logger.h"
 #include <mutex>
+#include "util.h"
 
 EventLoopThreadPool::EventLoopThreadPool(EventLoop* baseloop)
 	: baseloop_(baseloop)
@@ -33,11 +35,13 @@ void EventLoopThreadPool::setThreadNum(int numThreads)
 {
     numThreads_ = numThreads;
 }
+
 EventLoop* EventLoopThreadPool::getNextLoop()
 {
+    baseloop_->assertInLoopThread();
     EventLoop* loop = baseloop_;
-    if(!loops_.empty() && numThreads_!=0){
-        std::cout << "next_ loop is " << next_ << std::endl;
+    if(!loops_.empty()){
+        // LOG << "next_ loop is " << next_ << std::endl;
         loop = loops_[next_];
         next_ = (next_+1)%numThreads_;
     }

@@ -30,6 +30,7 @@ public:
   void setReusePort();
   void setKeepAlive();
   void setNonBlocking();
+  static int getSocketError(int sockfd);
 
 private:
   int sockfd_;

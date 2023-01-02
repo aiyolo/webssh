@@ -26,6 +26,8 @@ public:
     int createEventFd();
     void readWakeupFd();
     void assertInLoopThread();
+    bool hasChannel(Channel* channel);
+    void printActiveChannels() const;
 
     bool quit_;
     bool callingPendingFunctors_;

@@ -37,7 +37,7 @@ void EventLoopThread::threadFunc(){
     {
         std::lock_guard<std::mutex> lock(mutex_);
         loop_ = &loop;
-        cond_.notify_all();
+        cond_.notify_one();
     }
     loop.loop();
     {
